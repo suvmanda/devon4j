@@ -18,6 +18,11 @@ You need to add (at least one of) these dependencies to your application:
   <groupId>com.devonfw.java.starters</groupId>
   <artifactId>devon4j-starter-http-client-rest-async</artifactId>
 </dependency>
+<!-- Starter for synchronous consuming REST services via Jaca HTTP Client (Java11+) -->
+<dependency>
+  <groupId>com.devonfw.java.starters</groupId>
+  <artifactId>devon4j-starter-http-client-rest-sync</artifactId>
+</dependency>
 <!-- Starter for synchronous consuming REST services via Apache CXF (Java8+) -->
 <dependency>
   <groupId>com.devonfw.java.starters</groupId>
@@ -60,7 +65,7 @@ Then all you need to do is this:
 --------
 @Named
 public class UcMyUseCaseImpl extends MyUseCaseBase implements UcMyUseCase {
-  @Inject 
+  @Inject
   private ServiceClientFactory serviceClientFactory;
 
   ...
@@ -110,25 +115,25 @@ This solution allows a very flexible configuration on the following levels:
 2. Configuration per remote service application (microservice)
 3. Configuration per invocation.
 
-A configuration on a deeper level (e.g. 3) overrides the configuration from a higher level (e.g. 1). 
+A configuration on a deeper level (e.g. 3) overrides the configuration from a higher level (e.g. 1).
 
-The configuration on Level 1 and 2 are configured via `application.properties` 
-(see link:guide-configuration.asciidoc[configuration guide]). 
-For Level 1 the prefix `service.client.default.` is used for properties. 
-Further, for level 2. the prefix `service.client.app.«application».` is used where `«application»` is the 
-technical name of the application providing the service. This name will automatically be derived from 
-the java package of the service interface (e.g. `foo` in `MyService` interface before) following our 
+The configuration on Level 1 and 2 are configured via `application.properties`
+(see link:guide-configuration.asciidoc[configuration guide]).
+For Level 1 the prefix `service.client.default.` is used for properties.
+Further, for level 2. the prefix `service.client.app.«application».` is used where `«application»` is the
+technical name of the application providing the service. This name will automatically be derived from
+the java package of the service interface (e.g. `foo` in `MyService` interface before) following our
 link:coding-conventions.asciidoc#packages[packaging conventions].
 In case these conventions are not met it will fallback to the fully qualified name of the service interface.
 
-Configuration on Level 3 has to be provided as `Map` argument to the method 
-`ServiceClientFactory.create(Class<S> serviceInterface, Map<String, String> config)`. 
-The keys of this `Map` will not use prefixes (such as the ones above). For common configuration 
-parameters a type-safe builder is offered to create such map via `ServiceClientConfigBuilder`. 
+Configuration on Level 3 has to be provided as `Map` argument to the method
+`ServiceClientFactory.create(Class<S> serviceInterface, Map<String, String> config)`.
+The keys of this `Map` will not use prefixes (such as the ones above). For common configuration
+parameters a type-safe builder is offered to create such map via `ServiceClientConfigBuilder`.
 E.g. for testing you may want to do:
 [source,java]
 --------
-this.serviceClientFactory.create(MyService.class, 
+this.serviceClientFactory.create(MyService.class,
   new ServiceClientConfigBuilder().authBasic().userLogin(login).userPassword(password).buildMap());
 --------
 
@@ -149,13 +154,13 @@ service.client.app.bar.auth=authForward
 ```
 
 === Service Discovery
-You do not want to hardwire service URLs in your code, right? Therefore different strategies might apply 
-to _discover_ the URL of the invoked service. This is done internally by an implementation of the interface 
-`ServiceDiscoverer`. The default implementation simply reads the base URL from the configuration. 
+You do not want to hardwire service URLs in your code, right? Therefore different strategies might apply
+to _discover_ the URL of the invoked service. This is done internally by an implementation of the interface
+`ServiceDiscoverer`. The default implementation simply reads the base URL from the configuration.
 So you can simply add this to your `application.properties` as in the above configuration example.
 
-Assuming your service interface would have the fully qualified name 
-`com.company.department.foo.mycomponent.service.api.rest.MyService` then the URL would be resolved to 
+Assuming your service interface would have the fully qualified name
+`com.company.department.foo.mycomponent.service.api.rest.MyService` then the URL would be resolved to
 `https://foo.company.com:8443/services/rest` as the `«application»` is `foo`.
 
 Additionally, the URL might use the following variables that will automatically be resolved:
@@ -259,7 +264,7 @@ Invoking service com.devonfw.test.app.myexample.service.api.rest.MyExampleRestSe
 === Resilience
 Resilience adds a lot of complexity and that typically means that addressing this here would most probably result in not being up-to-date and not meeting all requirements. Therefore we recommend something completely different: the _sidecar_ approach (based on https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar[sidecar pattern]). This means that you use a generic proxy app that runs as a separate process on the same host, VM, or container of your actual application. Then in your app you are calling the service via the sidecar proxy on `localhost` (service discovery URL is e.g. `http://localhost:8081/${app}/services/${type}`) that then acts as proxy to the actual remote service. Now aspects such as resilience with circuit breaking and the actual service discovery can be configured in the sidecar proxy app and independent of your actual application. Therefore, you can even share and reuse configuration and experience with such a sidecar proxy app even across different technologies (Java, .NET/C#, Node.JS, etc.). Further, you do not pollute the technology stack of your actual app with the infrastructure for resilience, throttling, etc. and can update the app and the side-card independently when security-fixes are available.
 
-Various implementations of such sidecar proxy apps are available as free open source software. 
+Various implementations of such sidecar proxy apps are available as free open source software.
 Our recommendation in devonfw is to use https://istio.io/[istio]. This not only provides such a side-car but also an entire management solution for service-mesh making administration and maintenance much easier. Platforms like OpenShift support this out of the box.
 
 However, if you are looking for details about side-car implementations for services you can have a look at the following links:
